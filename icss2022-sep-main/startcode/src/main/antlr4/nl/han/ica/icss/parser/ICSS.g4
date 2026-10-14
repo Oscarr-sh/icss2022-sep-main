@@ -50,11 +50,12 @@ stylesheet: (variableAssignment | stylerule)* EOF;
 //level 0
 stylerule: selector OPEN_BRACE (variableAssignment | declaration | ifClause )* CLOSE_BRACE;
 selector: LOWER_IDENT | ID_IDENT | CLASS_IDENT;
-declaration: LOWER_IDENT COLON expression SEMICOLON;
+declaration: propertyName COLON expression SEMICOLON;
+propertyName: LOWER_IDENT;
 value: COLOR | PIXELSIZE | PERCENTAGE | variableReference | TRUE | FALSE | SCALAR;
 
 //level 1
-variableAssignment: CAPITAL_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
+variableAssignment: variableReference ASSIGNMENT_OPERATOR expression SEMICOLON;
 variableReference: CAPITAL_IDENT;
 
 //level 2
