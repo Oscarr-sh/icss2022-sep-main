@@ -1,7 +1,5 @@
 package nl.han.ica.icss.parser;
 
-import java.util.Stack;
-
 
 import com.sun.jdi.Value;
 import nl.han.ica.datastructures.HANStack;
@@ -155,6 +153,52 @@ public class ASTListener extends ICSSBaseListener {
 		currentContainer.peek().addChild(variableReference);
 	}
 
+	@Override
+	public void enterExpression(ICSSParser.ExpressionContext ctx) {
+		ASTNode expression;
+		if(ctx.MUL() != null) {
+			expression = new MultiplyOperation();
+		} else if(ctx.PLUS() != null) {
+			expression = new AddOperation();
+		} else if(ctx.MIN() != null) {
+			expression = new SubtractOperation();
+		} else {
+			return;
+		}
+		currentContainer.push(expression);
+	}
 
+	@Override
+	public void exitExpression(ICSSParser.ExpressionContext ctx) {
+		if (ctx.MUL() == null && ctx.PLUS() == null && ctx.MIN() == null) {
+			return;
+		}
+		ASTNode expression = currentContainer.pop();
+		currentContainer.peek().addChild(expression);
+	}
+
+    @Override
+	public void enterIfClause(ICSSParser.IfClauseContext ctx) {
+		ASTNode ifClause = new IfClause();
+		currentContainer.push(ifClause);
+	}
+
+	@Override
+	public void exitIfClause(ICSSParser.IfClauseContext ctx) {
+		IfClause ifClause = (IfClause) currentContainer.pop();
+		currentContainer.peek().addChild(ifClause);
+	}
+
+	@Override
+	public void enterElseClause(ICSSParser.ElseClauseContext ctx) {
+		ASTNode elseClause = new ElseClause();
+		currentContainer.push(elseClause);
+	}
+
+	@Override
+	public void exitElseClause(ICSSParser.ElseClauseContext ctx) {
+		ElseClause elseClause = (ElseClause) currentContainer.pop();
+		currentContainer.peek().addChild(elseClause);
+	}
 }
 
