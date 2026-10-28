@@ -1,16 +1,21 @@
 package nl.han.ica.icss.transforms;
 
+import nl.han.ica.datastructures.HANLinkedList;
 import nl.han.ica.datastructures.IHANLinkedList;
 import nl.han.ica.icss.ast.*;
+import nl.han.ica.icss.ast.literals.BoolLiteral;
 import nl.han.ica.icss.ast.literals.PercentageLiteral;
 import nl.han.ica.icss.ast.literals.PixelLiteral;
 import nl.han.ica.icss.ast.literals.ScalarLiteral;
 import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
+import nl.han.ica.icss.ast.types.ExpressionType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Evaluator implements Transform {
 
@@ -22,9 +27,89 @@ public class Evaluator implements Transform {
 
     @Override
     public void apply(AST ast) {
-        //variableValues = new HANLinkedList<>();
+        variableValues = new HANLinkedList<>();
+        evalStylesheet(ast.root);
 
     }
 
-    
+    private void evalStylesheet(Stylesheet stylesheet) {
+        variableValues.addFirst(new HashMap<>());
+        ArrayList<ASTNode> newBody = new ArrayList<>();
+
+        for (ASTNode child : stylesheet.body) {
+            if (child instanceof VariableAssignment) {
+                evalVariableAssignment((VariableAssignment) child);
+            } else if (child instanceof Stylerule) {
+                evalStylerule((Stylerule) child);
+                newBody.add(child);
+            }
+        }
+        stylesheet.body = newBody;
+        variableValues.removeFirst();
+    }
+
+    private void evalVariableAssignment(VariableAssignment variableAssignment) {
+        String name = variableAssignment.name.name;
+        Literal value = evalExpression(variableAssignment.expression);
+        variableValues.getFirst().put(name, value);
+    }
+
+    private void evalStylerule(Stylerule stylerule) {
+        stylerule.body = evalBody(stylerule.body);
+    }
+
+    private Literal evalExpression(Expression expression) {
+        if (expression instanceof Literal) {
+            return (Literal) expression;
+        } else if (expression instanceof VariableReference) {
+            String name = ((VariableReference) expression).name;
+            Literal value = findVariableValue(name);
+            return value;
+        }
+        return null;
+    }
+
+    private void evalDeclaration(Declaration declaration) {
+        Literal value = evalExpression(declaration.expression);
+        declaration.expression = value;
+    }
+
+    private Literal findVariableValue(String name) {
+        for (int i = 0; i < variableValues.getSize(); i++) {
+            Literal value = variableValues.get(i).get(name);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private ArrayList<ASTNode> evalIfClause(IfClause ifClause) {
+        ArrayList<ASTNode> newBody = new ArrayList<>();
+        BoolLiteral condition = (BoolLiteral) evalExpression(ifClause.conditionalExpression);
+        if (condition.value) {
+            newBody.addAll(evalBody(ifClause.body));
+        } else if (ifClause.elseClause != null) {
+            newBody.addAll(evalBody(ifClause.elseClause.body));
+        }
+        return newBody;
+    }
+
+    private ArrayList<ASTNode> evalBody(ArrayList<ASTNode> body) {
+        variableValues.addFirst(new HashMap<>());
+        ArrayList<ASTNode> newBody = new ArrayList<>();
+        for (ASTNode child : body) {
+            if (child instanceof VariableAssignment) {
+                evalVariableAssignment((VariableAssignment) child);
+            } else if (child instanceof Declaration) {
+                evalDeclaration((Declaration) child);
+                newBody.add(child);
+            } else if (child instanceof IfClause) {
+                newBody.addAll(evalIfClause((IfClause) child));
+            }
+        }
+        variableValues.removeFirst();
+        return newBody;
+    }
+
 }
