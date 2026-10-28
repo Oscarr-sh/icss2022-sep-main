@@ -8,21 +8,17 @@ import nl.han.ica.icss.ast.literals.PercentageLiteral;
 import nl.han.ica.icss.ast.literals.PixelLiteral;
 import nl.han.ica.icss.ast.literals.ScalarLiteral;
 import nl.han.ica.icss.ast.operations.AddOperation;
-import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
-import nl.han.ica.icss.ast.types.ExpressionType;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 
 public class Evaluator implements Transform {
 
     private IHANLinkedList<HashMap<String, Literal>> variableValues;
 
     public Evaluator() {
-        //variableValues = new HANLinkedList<>();
     }
 
     @Override
@@ -51,6 +47,14 @@ public class Evaluator implements Transform {
     private void evalVariableAssignment(VariableAssignment variableAssignment) {
         String name = variableAssignment.name.name;
         Literal value = evalExpression(variableAssignment.expression);
+
+        //Nodig om variabele te overschrijven. Zonder deze for loop komt er 0 uit wanneer je het voorbeeld uit de casus test.
+        for (int i = 0; i < variableValues.getSize(); i++) {
+            if (variableValues.get(i).containsKey(name)) {
+                variableValues.get(i).put(name, value);
+                return;
+            }
+        }
         variableValues.getFirst().put(name, value);
     }
 
@@ -144,7 +148,7 @@ public class Evaluator implements Transform {
     }
 
     private Literal makeSolvedOperationLiteral(Literal expression, int value) {
-        if(expression instanceof PixelLiteral) {
+        if (expression instanceof PixelLiteral) {
             return new PixelLiteral(value);
         } else if (expression instanceof PercentageLiteral) {
             return new PercentageLiteral(value);
