@@ -65,6 +65,8 @@ public class Evaluator implements Transform {
             String name = ((VariableReference) expression).name;
             Literal value = findVariableValue(name);
             return value;
+        } else if (expression instanceof Operation) {
+            return evalOperations((Operation) expression);
         }
         return null;
     }
@@ -111,5 +113,46 @@ public class Evaluator implements Transform {
         variableValues.removeFirst();
         return newBody;
     }
+
+    private int getValue(Literal literal) {
+        if (literal instanceof PixelLiteral) {
+            return ((PixelLiteral) literal).value;
+        } else if (literal instanceof PercentageLiteral) {
+            return ((PercentageLiteral) literal).value;
+        } else if (literal instanceof ScalarLiteral) {
+            return ((ScalarLiteral) literal).value;
+        }
+        return 0;
+    }
+
+    private Literal evalOperations(Operation operation) {
+        Literal left = evalExpression(operation.lhs);
+        Literal right = evalExpression(operation.rhs);
+        int leftValue = getValue(left);
+        int rightValue = getValue(right);
+
+        if (operation instanceof AddOperation) {
+            return makeSolvedOperationLiteral(left, leftValue + rightValue);
+        } else if (operation instanceof SubtractOperation) {
+            return makeSolvedOperationLiteral(left, leftValue - rightValue);
+        } else {
+            if (left instanceof ScalarLiteral) {
+                return makeSolvedOperationLiteral(right, leftValue * rightValue);
+            }
+            return makeSolvedOperationLiteral(left, leftValue * rightValue);
+        }
+    }
+
+    private Literal makeSolvedOperationLiteral(Literal expression, int value) {
+        if(expression instanceof PixelLiteral) {
+            return new PixelLiteral(value);
+        } else if (expression instanceof PercentageLiteral) {
+            return new PercentageLiteral(value);
+        } else if (expression instanceof ScalarLiteral) {
+            return new ScalarLiteral(value);
+        }
+        return null;
+    }
+
 
 }
