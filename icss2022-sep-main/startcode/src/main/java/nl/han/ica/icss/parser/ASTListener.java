@@ -61,7 +61,7 @@ public class ASTListener extends ICSSBaseListener {
 		ASTNode selector;
 		if(ctx.LOWER_IDENT() != null) {
 			selector = new TagSelector(ctx.getText());
-		} else if (ctx.ID_IDENT() != null) {
+		} else if (ctx.ID_IDENT() != null || ctx.COLOR() != null) {
 			selector = new IdSelector(ctx.getText());
 		} else {
 			selector = new ClassSelector(ctx.getText());

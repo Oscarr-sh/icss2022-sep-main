@@ -49,7 +49,7 @@ stylesheet: (variableAssignment | stylerule)* EOF;
 
 //level 0
 stylerule: selector OPEN_BRACE (variableAssignment | declaration | ifClause )* CLOSE_BRACE;
-selector: LOWER_IDENT | ID_IDENT | CLASS_IDENT;
+selector: LOWER_IDENT | ID_IDENT | CLASS_IDENT | COLOR;
 declaration: propertyName COLON expression SEMICOLON;
 propertyName: LOWER_IDENT;
 value: COLOR | PIXELSIZE | PERCENTAGE | variableReference | TRUE | FALSE | SCALAR;
